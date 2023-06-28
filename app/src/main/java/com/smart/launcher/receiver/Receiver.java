@@ -14,10 +14,22 @@ public class Receiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         Log.i(Constants.TAG, "Broadcast Received " + action);
-        if (action.equals(Constants.ACTION_ENABLE_LOCK_MODE_SUCCESS)) {
-            Intent startIntent = new Intent(context, MainActivity.class);
-            startIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(startIntent);
+        if (action != null) {
+            if (action.equals(Intent.ACTION_PACKAGE_ADDED)) {
+                // App installed
+                String packageName = intent.getData().getSchemeSpecificPart();
+                addToCustomLauncher(context, packageName);
+            } else if (action.equals(Intent.ACTION_PACKAGE_REMOVED)) {
+                // App removed
+                String packageName = intent.getData().getSchemeSpecificPart();
+                removeFromCustomLauncher(context, packageName);
+            }
         }
+    }
+
+    private void removeFromCustomLauncher(Context context, String packageName) {
+    }
+
+    private void addToCustomLauncher(Context context, String packageName) {
     }
 }
