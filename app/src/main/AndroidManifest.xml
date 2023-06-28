@@ -45,6 +45,28 @@
             </intent-filter>
 
         </receiver>
+
+        <receiver
+            android:name=".receiver.Receiver"
+            android:enabled="true"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.ENABLE_LOCK_MODE_SUCCESS" />
+            </intent-filter>
+
+        </receiver>
+
+<!--        <receiver-->
+<!--            android:name=".MainActivity$DownloadReceiver"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.DOWNLOAD_STARTED" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+
+
     </application>
 
 </manifest>
