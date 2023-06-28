@@ -2,20 +2,22 @@ package com.smart.launcher;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
+import androidx.lifecycle.ViewModelProvider;
+
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.GridView;
 
 import com.smart.launcher.adapter.AppHelper;
 import com.smart.launcher.adapter.AppIconAdapter;
+import com.smart.launcher.adapter.AppViewModel;
+import com.smart.launcher.receiver.Receiver;
 import com.smart.launcher.utility.Constants;
 
 import java.util.ArrayList;
@@ -23,26 +25,51 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    AppViewModel appViewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        enableLockMode();
+        registerReceiver();
+        hideSystemUI();
         loadApp();
+        appViewModel = new ViewModelProvider(this).get(AppViewModel.class);
     }
 
-    private void enableLockMode() {
-        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-        if (dpm.isLockTaskPermitted(getPackageName())) {
-            startLockTask();
-            launchApp();
-            Log.i(Constants.TAG, "Lock mode enabled");
-        } else {
-            Intent intent = new Intent(Constants.ACTION_ENABLE_LOCK_MODE);
-            intent.setComponent(new ComponentName(Constants.SERVICE_APP_PACKAGE, Constants.SERVICE_APP_RECEIVER_CLASS));
-            sendBroadcast(intent);
-            Log.i(Constants.TAG, "Lock mode not enabled");
+    protected void registerReceiver() {
+
+        Receiver receiver = new Receiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                super.onReceive(context, intent);
+                String action = intent.getAction();
+                if (action != null) {
+                    if (action.equals(Intent.ACTION_PACKAGE_ADDED) || action.equals(Intent.ACTION_PACKAGE_REMOVED)) {
+                        loadApp();
+                    }
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter.addDataScheme("package");
+
+        registerReceiver(receiver, filter);
+    }
+
+    public void hideSystemUI() {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
         }
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN);
     }
 
     private void loadApp() {
@@ -56,29 +83,12 @@ public class MainActivity extends AppCompatActivity {
             Drawable appIcon = resolveInfo.loadIcon(packageManager);
             String appName = resolveInfo.loadLabel(packageManager).toString();
             String packageName = resolveInfo.activityInfo.packageName;
-            if(packageName.equals(Constants.PACKAGE_NAME) || packageName.equals("com.service.keylessrn.activity")) {
+             if (packageName.equals(Constants.PACKAGE_NAME) || packageName.equals("com.service.keylessrn.activity")) {
                 appListHelper.add(new AppHelper(packageName, appName, appIcon));
             }
         }
 
         GridView appGrid = findViewById(R.id.appGrid);
         appGrid.setAdapter(new AppIconAdapter(this, appListHelper));
-    }
-
-    private void launchApp() {
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(Constants.PACKAGE_NAME);
-        if (launchIntent != null) {
-            startActivity(launchIntent);
-        }
-    }
-
-    int backCount = 0;
-    @Override
-    public void onBackPressed() {
-        backCount++;
-        if(backCount >= 7){
-            backCount = 0;
-            stopLockTask();
-        }
     }
 }

@@ -7,6 +7,11 @@ public class AppHelper {
     String name;
     Drawable icon;
 
+    public AppHelper(String packageName, String name) {
+        this.packageName = packageName;
+        this.name = name;
+    }
+
     public AppHelper(String packageName, String name, Drawable icon) {
         this.packageName = packageName;
         this.name = name;
@@ -16,6 +21,7 @@ public class AppHelper {
     public String getPackageName() {
         return packageName;
     }
+
     public String getName() {
         return name;
     }
